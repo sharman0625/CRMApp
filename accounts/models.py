@@ -11,6 +11,10 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def getCustOrderNum(self):
+        return self.order_set.all().count()
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=30, null=True)
@@ -41,7 +45,7 @@ class Order(models.Model):
         ('Out for Delivery', 'Out for Delivery'),
         ('Delivered', 'Delivered')
     )
-    cutomer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     status = models.CharField(max_length=30, choices=STATUS, null=True)
