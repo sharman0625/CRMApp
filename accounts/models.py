@@ -12,7 +12,7 @@ class Customer(models.Model):
         return self.name
 
     @property
-    def getCustOrderNum(self):
+    def getTotalOrders(self):
         return self.order_set.all().count()
 
 

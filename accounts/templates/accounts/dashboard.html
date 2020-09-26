@@ -18,9 +18,9 @@
                     </tr>
                     {% for cust in customers %}
                         <tr>
-                            <td>{{forloop.counter}}</td>
+                            <td><a class="btn btn-sm btn-outline-success" href="{% url 'customer' cust.id %}">{{forloop.counter}}</a></td>
                             <td>{{cust.name}}</td>
-                            <td>{{cust.getCustOrderNum}}</td>
+                            <td>{{cust.getTotalOrders}}</td>
                         </tr>
                     {% endfor %}
                 </table>
@@ -45,8 +45,8 @@
                             <td>{{ord.product.name}}</td>
                             <td>{{ord.date_created}}</td>
                             <td>{{ord.status}}</td>
-                            <td>Update</td>
-                            <td>Remove</td>
+                            <td><a class="btn btn-sm btn-info" href="">Update</a></td>
+                            <td><a class="btn btn-sm btn-danger" href="">Remove</a></td>
                         </tr>
                     {% endfor %}
                 </table>
