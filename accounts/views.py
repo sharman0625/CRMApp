@@ -1,11 +1,23 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.forms import inlineformset_factory
+from django.contrib.auth.forms import UserCreationForm
 
 from .models import *
 from .forms import OrderForm
+from .filters import OrderFilter
 
 # Create your views here.
+
+def login(request):
+    return render(request, 'accounts/login.html', context)
+
+def register(request):
+    form = UserCreationForm()
+    context = {
+        'form' : form
+    }
+    return render(request, 'accounts/register.html', context)
 
 def home(request):
     customers = Customer.objects.all()
@@ -39,9 +51,14 @@ def products(request):
 def customers(request, pk):
     customer = Customer.objects.get(pk=pk)
     orders = customer.order_set.all()
+
+    myFilter = OrderFilter(request.GET, queryset=orders)
+    orders = myFilter.qs
+
     context = {
         'customer' : customer,
-        'orders' : orders
+        'orders' : orders,
+        'myFilter' : myFilter
     }
     return render(request, 'accounts/customer.html', context)
 
