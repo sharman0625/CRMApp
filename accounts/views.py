@@ -4,46 +4,46 @@ from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 
 from .models import *
 from .forms import OrderForm, CreateUserForm
 from .filters import OrderFilter
+from .decorators import unauthenticated_user, allowed_users, admin_only
 
 # Create your views here.
 
+@unauthenticated_user
 def register(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        form = CreateUserForm()
-        if request.method=='POST':
-            form = CreateUserForm(request.POST)
-            if form.is_valid():
-                form.save()
-                username = form.cleaned_data.get('username')
-                messages.success(request, 'Successfully created : '+username)
-                return redirect('login')
-        context = {
-            'form' : form
-        }
-        return render(request, 'accounts/register.html', context)
+    form = CreateUserForm()
+    if request.method=='POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            group = Group.objects.get(name='Customer')
+            user.groups.add(group)
+            username = form.cleaned_data.get('username')
+            messages.success(request, 'Successfully created : '+username)
+            return redirect('login')
+    context = {
+        'form' : form
+    }
+    return render(request, 'accounts/register.html', context)
 
 
+@unauthenticated_user
 def loginPage(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        if request.method=='POST':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('home')
-            else:
-                messages.info(request, 'Useranem OR Password is incorrect')
-        context = {}
-        return render(request, 'accounts/login.html', context)
+    if request.method=='POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.info(request, 'Useranem OR Password is incorrect')
+    context = {}
+    return render(request, 'accounts/login.html', context)
 
 
 @login_required(login_url='login')
@@ -52,6 +52,7 @@ def logoutPage(request):
     return redirect('login')
 
 @login_required(login_url='login')
+@admin_only
 def home(request):
     customers = Customer.objects.all()
     orders = Order.objects.all().order_by('-date_created')
@@ -72,8 +73,12 @@ def home(request):
 
     return render(request, 'accounts/dashboard.html', context)
 
+def userPage(request):
+    context = {}
+    return render(request, 'accounts/user.html', context)
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['Admin'])
 def products(request):
     products = Product.objects.all()
     context = {
@@ -83,6 +88,7 @@ def products(request):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['Admin'])
 def customers(request, pk):
     customer = Customer.objects.get(pk=pk)
     orders = customer.order_set.all()
@@ -99,6 +105,7 @@ def customers(request, pk):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['Admin'])
 def creatOrder(request, pk):
     OrderFormSet = inlineformset_factory(Customer, Order, fields=['product', 'status'], extra=5)
     customer = Customer.objects.get(id=pk)
@@ -118,6 +125,7 @@ def creatOrder(request, pk):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['Admin'])
 def updateOrder(request, pk):
     order = Order.objects.get(id=pk)
     form = OrderForm(instance=order)
@@ -132,6 +140,7 @@ def updateOrder(request, pk):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['Admin'])
 def deleteOrder(request, pk):
     order = Order.objects.get(id=pk)
     if request.method=='POST':
