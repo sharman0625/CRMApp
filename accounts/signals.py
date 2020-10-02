@@ -9,7 +9,7 @@ from .models import Customer, User
 @receiver(post_save, sender=User)
 def customer_profile(sender, instance, created, **kwargs):
     if created:       
-        group = Group.objects.get(name='Customer')
+        group, created = Group.objects.get_or_create(name='Customer')
         instance.groups.add(group)
         Customer.objects.create(user=instance,name=instance.username)   # Here : instance = user
         print('Profile created')
